@@ -22,5 +22,6 @@ class Subclass(RightSubclass, LeftSubclass):
         print("Calling method on Subclass")
         self.num_sub_calls += 1
 
+
 s = Subclass()
 s.call_me()

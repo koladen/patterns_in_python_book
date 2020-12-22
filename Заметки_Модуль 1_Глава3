@@ -1,0 +1,115 @@
+Модуль 1, Глава 3
+
+
+Мы можем наследовать от встроенных типов! Дополняя их поведение
+Пример:
+
+class ContactList(list):
+    def search(self, name):
+        matching_contacts = []
+        return [contact for contact in self if name in contact.name]
+
+class Contact:
+    all_contacts = ContactList() - это переменная класса!
+    def __init__(self, name, email):
+        self.name = name
+        self.email = email
+        self.all_contacts.append(self)
+
+В экземплярах класса Contact мы можем использовать такой код:
+self.all_contacts - это будет равнозначно коду Contact.all_contacts. Но если мы присвоим self.all_contacts какое-то
+значение в экземпляре класса, СОЗДАСТСЯ НОВАЯ ПЕРЕМЕННАЯ all_contacts ЭКЗЕМПЛЯРА КЛАССА! Сама классовая переменная
+all_contacts НЕ ИЗМЕНИТСЯ! ВНИМАТЕЛЬНО!!!!
+
+Функция super() - возвращает объект родительского класса, у которого мы можем, например, вызвать __init__
+super().__init__(name, email)
+
+Множественное наследование - очень аккуратно, можно нарваться на трудноотлавливаемые ошибки!
+Пример:
+class BaseClass:
+    num_base_calls = 0
+    def call_me(self):
+        print("Calling method on Base Class")
+        self.num_base_calls += 1
+class LeftSubclass(BaseClass):
+    num_left_calls = 0
+    def call_me(self):
+        super().call_me()
+        print("Calling method on Left Subclass")
+        self.num_left_calls += 1
+class RightSubclass(BaseClass):
+    num_right_calls = 0
+    def call_me(self):
+        super().call_me()
+        print("Calling method on Right Subclass")
+        self.num_right_calls += 1
+class Subclass(RightSubclass, LeftSubclass):
+    num_sub_calls = 0
+    def call_me(self):
+        super().call_me()
+        print("Calling method on Subclass")
+        self.num_sub_calls += 1
+
+В данном случае, метод call_me вызванный у Subclass срабатывает так: вызывается super().call_me(), а какой класс здесь
+super? Это определяется порядком наследования!!! Т.е. super для Subclass - RightSubclass! Его метод call_me и super
+ведет ко второму классу в порядке наследования, к LeftSubclass! И только его super приведет к BaseClass!!!!!
+Т.е. при множественном наследовании super ведет себя как NEXT. Да и не только при множественном скорее всего.
+В общем - аккуратно с переопределяемыми методами при множественном наследовании, и надо учитывать порядок списка
+наследуемых классов!
+
+
+ПОЛИМОРФИЗМ И УТИНАЯ ТИПИЗАЦИЯ
+
+Полиморфизм - различное поведение, в зависимости от того, какой класс используется, без необходимости знать, какой
+конкретно класс мы используем.
+Например, используем метод play() у классов описанных ниже. Нам все равно, какой именно класс мы используем, лишь бы он
+реализовал метод play().
+
+Предположим, что у нас есть такая иерархия классов:
+
+class AudioFile:
+    def __init__(self, filename):
+        if not filename.endswith(self.ext):
+            raise Exception("Invalid file format")
+        self.filename = filename
+
+class MP3File(AudioFile):
+    ext = "mp3"
+    def play(self):
+        print("playing {} as mp3".format(self.filename))
+
+class WavFile(AudioFile):
+    ext = "wav"
+    def play(self):
+        print("playing {} as wav".format(self.filename))
+
+class OggFile(AudioFile):
+    ext = "ogg"
+    def play(self):
+        print("playing {} as ogg".format(self.filename))
+
+В базовом классе нет переменной ext! А в __init__ мы обращаемся к self.ext. Создать экземпляр базового класса у нас не
+получится, будет ошибка. Однако в классах - наследниках мы задаем переменные КЛАССА ext. И при инициализации, никаких
+ошибок уже не будет. self.ext в данном случае означает обращение к переменной КЛАССА, а не переменной ЭКЗЕМПЛЯРА КЛАССА!
+
+Утиная типизация означает, что мы можем использовать любой объект предоставляющий необходимое поведение, без
+необходимости ,чтобы он был подклассом базового класса.
+Например, к приведенной выше иерархии классов:
+
+class FlacFile:
+    def __init__(self, filename):
+        if not filename.endswith(".flac"):
+            raise Exception("Invalid file format")
+        self.filename = filename
+    def play(self):
+        print("playing {} as flac".format(self.filename))
+
+Хотя FlacFile - это совершенно посторонний класс, тот, кто работает с наследниками класса AudioFile, прекрасно будет
+работать и с ним, т.к. он реализует необходимое поведение. Необходимо так же следить, чтобы это поведение имело смысл
+в данной системе и в данном контексте.
+
+Полезное свойство утиной типизации - это то, что нам нет необходимости реализовывать ВСЕ методы объекта под который мы
+маскируемся, нам нужно реализовать только те методы, которые на необходимы. Например, если нам нужно создать поддельный
+файловый объект для чтения данных, мы можем создать новый объект с методом read (); нам не нужно переопределять метод
+write, если код, который будет взаимодействовать с объектом, будет только читать из файла.
+
