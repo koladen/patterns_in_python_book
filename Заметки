@@ -1,0 +1,20 @@
+Модуль 1, Глава 3
+Мы можем наследовать от встроенных типов! Дополняя их поведение
+Пример:
+
+class ContactList(list):
+    def search(self, name):
+        matching_contacts = []
+        return [contact for contact in self if name in contact.name]
+
+class Contact:
+    all_contacts = ContactList() - это переменная класса!
+    def __init__(self, name, email):
+        self.name = name
+        self.email = email
+        self.all_contacts.append(self)
+
+В экземплярах класса Contact мы можем использовать такой код:
+self.all_contacts - это будет равнозначно коду Contact.all_contacts. Но если мы присвоим self.all_contacts какое-то
+значение в экземпляре класса, СОЗДАСТСЯ НОВАЯ ПЕРЕМЕННАЯ all_contacts ЭКЗЕМПЛЯРА КЛАССА! Сама классовая переменная
+all_contacts НЕ ИЗМЕНИТСЯ! ВНИМАТЕЛЬНО!!!!
