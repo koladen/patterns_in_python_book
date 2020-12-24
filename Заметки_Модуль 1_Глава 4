@@ -1,0 +1,138 @@
+Модуль 1, Глава 4
+ИСКЛЮЧЕНИЯ
+
+В этом примере:
+def no_return():
+    print("I am about to raise an exception")
+    raise Exception("This is always raised")
+    print("This line will never execute")
+    return "I won't be returned"
+
+
+try:
+    no_return()
+except Exception:
+    print('I caught the exception')
+print("executed after the exception")
+
+Мы никогда не достигнем строчки print("This line will never execute"), т.к. вызов исключения прервет выполнение функции
+и управление вернется к блоку проверки исключений except Exception:
+
+В этом примере:
+def funny_division2(anumber):
+    try:
+        if anumber == 13:
+            raise ValueError("13 is an unlucky number")
+        return 100 / anumber
+    except (ZeroDivisionError, TypeError):  #  Отлавливаем 2 или более исключений, с выводом одного и того же сообщения
+        return "Enter a number other than zero"
+
+Мы вывалимся по исключению ValueError, т.к. мы его не обрабатываем нигде. А исключения ZeroDivisionError и TypeError
+выдадут одно и то же сообщение
+
+
+В этом примере:
+def funny_division3(anumber):
+    try:
+        if anumber == 13:
+            raise ValueError("13 is an unlucky number")
+        return 100 / anumber
+    except ZeroDivisionError:
+        return "Enter a number other than zero"
+    except TypeError:
+        return "Enter a numerical value"
+    except ValueError:
+        print("No, No, not 13!")
+        raise  #  ТУТ ПЕРЕВЫЗЫВАЕТСЯ ПОСЛЕДНЕЕ ИСКЛЮЧЕНИЕ, ЕСЛИ МЫ НАХОДИМСЯ ВНУТРИ ОБРАБОТЧИКА ИСКЛЮЧЕНИЙ
+
+Мы будем ловить исключения по порядку, и в конце, там где raise без аргументов, перевызываем последнее исключение. Оно
+НЕ ОБРАБОТАЕТСЯ!
+
+Т.к. исключение - это объект, то можно получить объект исключения в переменную, и потом, добраться до его внутренностей,
+например аргументов (методов). Сохранить в переменную можно с ключевым словом as
+Пример:
+try:
+    raise ValueError("This is an argument")
+except ValueError as e:
+    print("The exception arguments were", e.args)
+
+
+В этом примере:
+import random
+some_exceptions = [ValueError, TypeError, IndexError, None]
+try:
+    choice = random.choice(some_exceptions)
+    print("raising {}".format(choice))
+    if choice:
+        raise choice("An error")
+except ValueError:
+    print("Caught a ValueError")
+except TypeError:
+    print("Caught a TypeError")
+except Exception as e:
+    print("Caught some other error: %s" %
+    ( e.__class__.__name__))
+else:
+    print("This code called if there is no exception")
+finally:
+    print("This cleanup code is always called")
+
+код в ветке else: срабатывает, если ни одного исключения (не важно каких) не было поймано. А ветка finally: отрабатывает
+ВСЕГДА, независимо от того поймали исключение или нет! Причем эта ветка отработает даже если мы сделали return в ветке
+обработки! Более того, если не было исключений, сработают обе ветки, и else и finally!!! А вот тут
+except Exception as e: мы обрабатываем все остальные исключения которые не были обработаны, и печатаем имена их классов.
+
+There are two key exceptions, SystemExit and KeyboardInterrupt, that derive directly from BaseException instead of
+Exception. The SystemExit exception is raised whenever the program exits naturally, typically because we called the sys.
+exit function somewhere in our code (for example, when the user selected an exit menu item, clicked the "close" button on
+a window, or entered a command to shut down a server). The exception is designed to allow us to clean up code before the
+program ultimately exits, so we generally don't need to handle it explicitly (because cleanup code happens inside a
+finally clause).
+
+The KeyboardInterrupt exception is common in command-line programs. It is thrown when the user explicitly interrupts
+program execution with an OS-dependent key combination (normally, Ctrl+ C). This is a standard way for the user to
+deliberately interrupt a running program, and like SystemExit, it should almost always respond by terminating the
+program. Also, like SystemExit, it should handle any cleanup tasks inside finally blocks.
+
+When we use the except:clause without specifying any type of exception, it will catch all subclasses of BaseException;
+which is to say, it will catch all exceptions, including the two special ones. Since we almost always want these to get
+special treatment, it is unwise to use the except:statement without arguments. If you want to catch all exceptions other
+than SystemExit and KeyboardInterrupt, explicitly catch Exception.
+
+Создавать свое исключение очень просто. Создаем свой класс, и наследуем его от Exception.
+Пример:
+class InvalidWithdrawal(Exception):
+    pass
+
+raise InvalidWithdrawal("You don't have $50 in your account")
+
+We are able to pass an arbitrary number of arguments into the exception. Often a string message is used, but any object
+that might be useful in a later exception handler can be stored. The Exception.__init__method is designed to accept any
+arguments and store them as a tuple in an attribute named args. This makes exceptions easier to define without needing
+to override __init__.
+Но нам никто не мешает перегрузить __init__, если мы эотго хотим
+Пример:
+class InvalidWithdrawal(Exception):
+    def __init__(self, balance, amount):
+        super().__init__("account doesn't have ${}".format(amount))
+        self.amount = amount
+        self.balance = balance
+
+    def overage(self):
+        return self.amount - self.balance
+
+try:
+    raise InvalidWithdrawal(25, 50)
+except InvalidWithdrawal as e:
+    print("I'm sorry, but your withdrawal is more than your balance by ${}".format(e.overage()))
+
+Тут мы переопределяем __init__, вызываем __init__ у родителя, сохраняем баланс и выводимую сумму, а так же определяем
+метод overage, который нам позволит вычислить, сколько не хватает для вывода. Ниже мы обрабатываем наше исключение,
+сохраняя его объект в переменную, и через нее можем обратиться к методу overage
+
+Что использовать лучше, проверку, перед каким то действием, или действие, а потом отлов исключения? ВТОРОЕ!
+ПРОСИ ПРОЩЕНИЯ,А НЕ РАЗРЕШЕНИЯ! Помимо отсутствия кучи веток if else, мы полцчаем дополнительное преимущество, к объекту
+исключения можно прицепить кучу информации и методов, которые мы можем красиво обработать.
+
+
+
