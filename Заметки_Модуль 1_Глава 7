@@ -1,0 +1,72 @@
+Модуль 1, Глава 7
+РАЗНОЕ
+
+Similar to len, reversed calls the __reversed__()function on the class for the parameter. If that method does not exist,
+reversed builds the reversed sequence itself using calls to __len__and __getitem__, which are used to define a sequence.
+We only need to override __reversed__if we want to somehow customize or optimize the process:
+
+normal_list=[1,2,3,4,5]
+class CustomSequence():
+    def __len__(self):
+        return 5
+
+    def __getitem__(self, index):
+        return "x{0}".format(index)
+
+class FunkyBackwards():
+    def __reversed__(self):
+        return "BACKWARDS!"
+
+for seq in normal_list, CustomSequence(), FunkyBackwards():
+    print("\n{}: ".format(seq.__class__.__name__), end="")
+    for item in reversed(seq):
+        print(item, end=", ")
+
+The for loops at the end print the reversed versions of a normal list, and instances of the two custom sequences. The
+output shows that reversed works on all three of them, but has very different results when we
+define __reversed__ourselves:
+
+list: 5, 4, 3, 2, 1,
+CustomSequence: x4, x3, x2, x1, x0,
+FunkyBackwards: B, A, C, K, W, A, R, D, S, !,
+
+When we reverse CustomSequence, the __getitem__method is called for each item, which just inserts an x before the index.
+For FunkyBackwards, the __reversed__ method returns a string, each character of which is output individually in the for
+loop.
+
+KWARGS
+
+We can also accept arbitrary keyword arguments. These arrive into the function as a dictionary. They are specified with
+two asterisks (as in **kwargs) in the function declaration. This tool is commonly used in configuration setups. The
+following class allows us to specify a set of options with default values:
+
+class Options:
+    default_options = {
+    'port': 21,
+    'host': 'localhost',
+    'username': None,
+    'password': None,
+    'debug': False,
+    }
+
+    def __init__(self, **kwargs):
+        self.options = dict(Options.default_options)
+        self.options.update(kwargs)
+
+    def __getitem__(self, key):
+        return self.options[key]
+
+All the interesting stuff in this class happens in the __init__method. We have a dictionary of default options and
+values at the class level. The first thing the __init__ method does is make a copy of this dictionary. We do that
+instead of modifying the dictionary directly in case we instantiate two separate sets of options. (Remember,
+class-level variables are shared between instances of the class.) Then, __init__uses the update method on the new
+dictionary to change any non-default values to those supplied as keyword arguments. The __getitem__method simply
+allows us to use the new class using indexing syntax. Here's a session demonstrating the class in action:
+
+>>options = Options(username="dusty", password="drowssap", debug=True)
+
+>>options['debug']
+True
+
+>>options['username']
+'dusty'
