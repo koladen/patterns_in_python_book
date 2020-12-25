@@ -1,0 +1,94 @@
+Модуль 1, Глава 6
+СТРУКТУРЫ ДАННЫХ
+
+Named tuples
+
+from collections import namedtuple
+Stock = namedtuple("Stock", "symbol current high low") Тут мы называем будущий тапл, и указываем, что в нем будут
+                                                       храниться данные с именами symbol current high low
+stock = Stock("FB", 75.00, high=75.03, low=74.90)      Тут мы инициализируем тапл
+
+Мы можем определить столько инстансов этого тапла, сколько захотим, и проинициализируем их разными значениями
+Например:
+gazp = Stock("GAZ", 360.00, high=375.03, low=324.90)
+
+Далее можно обращаться с инстансами, как с классом:
+stock.high
+75.03
+Распаковывать:
+symbol, current, high, low = stock
+current
+75
+
+Не забываем, что все-таки это тапл, и значит мы не можем изменять его значения после инициализации!!!
+
+Default Dict
+
+from collections import defaultdict
+def letter_frequency(sentence):
+    frequencies = defaultdict(int)  ТУТ НА ВХОД defaultdict ПОДАЕТСЯ ФУНКЦИЯ, КОТОРУЮ ОН ДОЛЖЕН ВЫЗЫВАТЬ, ЕСЛИ В
+    for letter in sentence:         СЛОВАРЕ НЕТ ТАКОГО КЛЮЧА. В ДАННОМ СЛУЧАЕ ВЫЗЫВАЕТСЯ ФУНКЦИЯ int, КОТОРАЯ БЕЗ
+        frequencies[letter] += 1    АРГУМЕНТОВ ВОЗВРАЩАЕТ 0. И ПО ДАННОМУ КЛЮЧУ В СЛОВАРЬ ЗАПИСЫВАЕТСЯ 0
+    return frequencies
+
+The default dicts useful for creating dictionaries of containers. If we want to  create a dictionary of stock prices for
+the past 30 days, we could use a stock symbol as the key and store the prices in list; the first time we access the
+stock price, we would want it to create an empty list. Simply pass list into the default dict, and it will be called
+every time an empty key is accessed. We can do similar things with sets or even empty dictionaries if we want to
+associate one with a key.
+
+Сортировка списков
+
+If we want to place objects we define ourselves into a list and make those objects sortable, we have to do a bit more
+work. The special method __lt__, which stands for "less than", should be defined on the class to make instances of that
+class comparable. The sort method on list will access this method on each object to determine where it goes in the list.
+This method should return Trueif our class is somehow less than the passed parameter, and False otherwise. Here's a
+rather silly class that can be sorted based on either a string or a number:
+
+class WeirdSortee:
+def __init__(self, string, number, sort_num):
+    self.string = string
+    self.number = number
+    self.sort_num = sort_num
+
+def __lt__(self, object):
+    if self.sort_num:
+        return self.number < object.number
+    return self.string < object.string
+
+The __lt__ method's implementation compares the object to another instance of the same class (or any duck typed object
+that has string, number, and sort_num attributes; it will fail if those attributes are missing).
+
+The __lt__method is the only one we need to implement to enable sorting. Technically, however, if it is implemented,
+the class should normally also implement the similar __gt__, __eq__, __ne__, __ge__, and __le__ methods so that all of
+the <, >, ==, !=, >=, and <= operators also work properly. You can get this for free by implementing __lt__ and __eq__,
+and then applying the @total_ordering class decorator to supply the rest:
+
+from functools import total_ordering
+
+@total_ordering
+class WeirdSortee:
+    def __init__(self, string, number, sort_num):
+        self.string = string
+        self.number = number
+        self.sort_num = sort_num
+    def __lt__(self, object):
+        if self.sort_num:
+            return self.number < object.number
+        return self.string < object.string
+
+    def __eq__(self, object):
+        return all((
+        self.string == object.string,
+        self.number == object.number,
+        self.sort_num == object.number
+))
+
+Аргумент сортировки - key
+
+The sort method can take an optional key argument. This argument is a function that can translate each object in a list
+into an object that can somehow be compared. For example, we can use str.lower as the key argument to perform a
+case-insensitive sort on a list of strings.
+Remember, even though lower is a method on string objects, it is also a function that can accept a single argument,
+self. In other words, str.lower(item)is equivalent to item.lower(). When we pass this function as a key, it performs
+the comparison on lowercase values instead of doing the default case-sensitive comparison.
