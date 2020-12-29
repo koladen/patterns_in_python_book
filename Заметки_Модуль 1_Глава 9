@@ -1,0 +1,54 @@
+Модуль 1, Глава 9
+ИТЕРАТОРЫ, ГЕНЕРАТОРЫ, КОРУТИНЫ
+
+
+def tally():
+    score = 1
+    while True:
+        increment = yield score
+        print(increment)
+        score += increment if increment else 1
+
+Когда мы вызываем next над этим кодом, мы получаем:
+1) Срабатывает yield, возвращая 1
+2) Т.к. yield ничег оне передает внутрь процедуры, increment = None
+3) score увеличивается на 1
+и т.д.
+
+Если мы внутрь этого кода передаем send(3):
+1) yield не срабатывает!
+2) increment получает значение 3
+3) score увеличивается на 3
+4) срабатывает yield, возвращая 4
+
+Пример корутины:
+import re
+def match_regex(filename, regex): # СОЗДАЕМ КОРУТИНУ, В КОТОРУЮ БУДЕМ ПЕРЕДАВАТЬ РЕГУЛЯРНЫЕ ВЫРАЖЕНИЯ
+    with open(filename) as file:
+        lines = file.readlines()    # СЧИТЫВАЕМ ВСЕ СТРОКИ
+    for line in reversed(lines):    # И БЕЖИМ ПО НИМ В ОБРАТНОМ ПОРЯДКЕ
+        match = re.match(regex, line)   # ПРИМЕНЯЯ К НИМ РЕГУЛЯРКУ
+        if match:                       # ЕСЛИ НАШЛИ СОВПАДЕНИЕ, ВОЗВРАЩАЕМ СОХРАНЕННУЮ ГРУППУ, И ГОТОВИМСЯ
+            regex = yield match.groups()[0] # ПРИНЯТЬ НОВУЮ РЕГУЛЯРКУ
+
+def get_serials(filename):
+    ERROR_RE = 'XFS ERROR (\[sd[a-z]\])'    # ГОТОВИМ РЕГУЛЯРКУ ДЛЯ КОРУТИНЫ. В НЕЙ МЫ ИЩЕМ ОШИБКУ XFS ERROR В ФАЙЛЕ
+    matcher = match_regex(filename, ERROR_RE)   # ПОДГОТАВЛИВАЕМ КОРУТИНУ
+    device = next(matcher)                      # И ИНИЦИАЛИЗИРУЕМ ЕЕ. В ПЕРЕМЕННОЙ device - ПЕРВОЕ СООБЩЕНИЕ ОБ ОШИБКЕ
+    while True:                                 # XFS ERROR. ТОЧНЕЕ - ИМЯ УСТРОЙСТВА
+        bus = matcher.send('(sd \S+) {}.*'.format(re.escape(device))) # ОТПРАВЛЯЕМ В КОРУТИНУ НОВУЮ РЕГУЛЯРКУ, КОТОРАЯ
+                                                                      # ИЩЕТ ШИНУ НА КОТОРОЙ ПРОИЗОШЛА ОШИБКА. МЫ
+                                                                      # ПРОДОЛЖАЕМ БЕЖАТЬ НАЗАД ПО ФАЙЛУ В КОРУТИНЕ
+                                                                      # ТОЛЬКО ПРИМЕНЯЕМ К СТРОКАМ УЖЕ ЭТУ РЕГУЛЯРКУ!
+
+        serial = matcher.send('{} \(SERIAL=([^)]*)\)'.format(bus))  # ТАК ЖЕ, КАК В ПРЕДЫДУЩЕЙ СТРОКЕ ОТПРАВЛЯЕМ НОВУЮ
+                                                                    # РЕГУЛЯРКУ, ОСНОВЫВАЯСЬ НА РЕЗУЛЬТАТАХ ПОИСКА
+                                                                    # ПРЕДЫДУЩЕЙ. В ПЕРЕМЕННОЙ serial - ИСКОМЫЙ СЕРИЙНЫЙ
+                                                                    # НОМЕР ДИСКА
+
+        yield serial    # ВОЗВРАЩАЕМ ЭТОТ СЕРИЙНЫЙ НОМЕР
+        device = matcher.send(ERROR_RE) # ВОССТАНАВЛИВАЕМ ПЕРВУЮ РЕГУЛЯРКУ, И ПРОДОЛЖАЕМ БЕЖАТЬ ПО ФАЙЛУ
+
+for serial_number in get_serials('EXAMPLE_LOG.log'):    # БЕЖИМ ПО ИТЕРАТОРУ И ПЕЧАТАЕМ СЕРИЙНЫЙ НОМЕР
+    print(serial_number)
+
