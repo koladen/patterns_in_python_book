@@ -1,0 +1,130 @@
+class Subject:
+    def __init__(self):
+        self.__observers = []
+
+    def register(self, observer):
+        self.__observers.append(observer)
+
+    def notifyAll(self, *args, **kwargs):
+        for observer in self.__observers:
+            observer.notify(self, *args, **kwargs)
+
+class Observer1:
+    def __init__(self, subject):
+        subject.register(self)
+
+    def notify(self, subject, *args):
+        print(type(self).__name__,':: Got', args, 'From', subject)
+
+
+class Observer2:
+    def __init__(self, subject):
+        subject.register(self)
+
+    def notify(self, subject, *args):
+        print(type(self).__name__, ':: Got', args, 'From', subject)
+
+
+subject = Subject()
+observer1 = Observer1(subject)
+observer2 = Observer2(subject)
+subject.notifyAll('notification')
+
+
+ПРИМЕР 2
+
+class NewsPublisher:
+    def __init__(self):
+        self.__subscribers = []
+        self.__latestNews = None
+
+    def attach(self, subscriber):
+        self.__subscribers.append(subscriber)
+
+    def detach(self):
+        return self.__subscribers.pop()
+
+    def subscribers(self):
+        return [type(x).__name__ for x in self.__subscribers]
+
+    def notifySubscribers(self):
+        for sub in self.__subscribers:
+            sub.update()
+
+    def addNews(self, news):
+        self.__latestNews = news
+
+    def getNews(self):
+        return "Got News:", self.__latestNews
+
+
+from abc import ABCMeta, abstractmethod
+
+class Subscriber(metaclass=ABCMeta):
+
+    @abstractmethod
+    def update(self):
+        pass
+
+
+class SMSSubscriber:
+    def __init__(self, publisher):
+        self.publisher = publisher
+        self.publisher.attach(self)
+
+    def update(self):
+        print(type(self).__name__, self.publisher.getNews())
+
+
+class EmailSubscriber:
+    def __init__(self, publisher):
+        self.publisher = publisher
+        self.publisher.attach(self)
+
+    def update(self):
+        print(type(self).__name__, self.publisher.getNews())
+
+
+class AnyOtherSubscriber:
+    def __init__(self, publisher):
+        self.publisher = publisher
+        self.publisher.attach(self)
+
+    def update(self):
+        print(type(self).__name__, self.publisher.getNews())
+
+if __name__ == '__main__':
+    news_publisher = NewsPublisher()
+    for Subscribers in [SMSSubscriber, EmailSubscriber,AnyOtherSubscriber]:
+        Subscribers(news_publisher)
+    print("\nSubscribers:", news_publisher.subscribers())
+    news_publisher.addNews('Hello World!')
+    news_publisher.notifySubscribers()
+    print("\nDetached:", type(news_publisher.detach()).__name__)
+    print("\nSubscribers:", news_publisher.subscribers())
+    news_publisher.addNews('My second news!')
+    news_publisher.notifySubscribers()
+
+The pull model
+In the pull model, Observers play an active role as follows:
+•  The Subject broadcasts to all the registered Observers when there is
+any change
+•  The Observer is responsible for getting the changes or pulling data from the
+subscriber when there is an amendment
+•  The pull model is ineffective as it involves two steps—the first step where
+the Subject notifies the Observer and the second step where the Observer
+pulls the required data from the Subject
+
+
+The push model
+In the push model, the Subject is the one that plays a dominant role as follows:
+•  Unlike the pull model, the changes are pushed by the Subject to
+the Observer.
+•  In this model, the Subject can send detailed information to the Observer
+(even though it may not be needed). This can result in sluggish response
+times when a large amount of data is sent by the Subject but is never
+actually used by the Observer.
+•  Only the required data is sent from the Subject so that the performance
+is better.
+
+
