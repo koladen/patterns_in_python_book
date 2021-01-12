@@ -1,0 +1,42 @@
+TheTemplate Method pattern is used in the following cases:
+•  When multiple algorithms or classes implement similar or identical logic
+•  The implementation of algorithms in subclasses helps reduce
+code duplication
+•  Multiple algorithms can be defined by letting the subclasses implement the
+behavior through overriding
+
+from abc import ABCMeta, abstractmethod
+
+class Compiler(metaclass=ABCMeta):
+
+    @abstractmethod
+    def collectSource(self):
+        pass
+
+    @abstractmethod
+    def compileToObject(self):
+        pass
+
+    @abstractmethod
+    def run(self):
+        pass
+
+    def compileAndRun(self):
+        self.collectSource()
+        self.compileToObject()
+        self.run()
+
+
+class iOSCompiler(Compiler):
+    def collectSource(self):
+        print("Collecting Swift Source Code")
+
+    def compileToObject(self):
+        print("Compiling Swift code to LLVM bitcode")
+
+    def run(self):
+        print("Program runing on runtime environment")
+
+
+iOS = iOSCompiler()
+iOS.compileAndRun()
