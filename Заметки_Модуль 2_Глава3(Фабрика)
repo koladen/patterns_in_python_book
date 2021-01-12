@@ -1,0 +1,182 @@
+There are three variants of the Factory pattern:
+•  Simple Factory pattern: This allows interfaces to create objects without
+exposing the object creation logic.
+•  Factory method pattern: This allows interfaces to create objects, but defers
+the decision to the subclasses to determine the class for object creation.
+•  Abstract Factory pattern: An Abstract Factory is an interface to create related
+objects without specifying/exposing their classes. The pattern provides
+objects of another factory, which internally creates other objects.
+
+                                        Simple Factory
+
+from abc import ABCMeta, abstractmethod
+class Animal(metaclass = ABCMeta):
+    @abstractmethod
+    def do_say(self):
+        pass
+
+class Dog(Animal):
+    def do_say(self):
+        print("Bhow Bhow!!")
+
+class Cat(Animal):
+    def do_say(self):
+        print("Meow Meow!!")
+
+## forest factory defined
+class ForestFactory(object):
+    def make_sound(self, object_type):
+        return eval(object_type)().do_say()
+
+## client code
+if __name__ == '__main__':
+    ff = ForestFactory()
+    animal = input("Which animal should make_sound Dog or Cat?")
+    ff.make_sound(animal)
+
+                                        Factory Method
+
+•  We define an interface to create objects, but instead of the factory being
+responsible for the object creation, the responsibility is deferred to the
+subclass that decides the class to be instantiated.
+•  The Factory method creation is through inheritance and not
+through instantiation.
+•  The Factory method makes the design more customizable. It can return the
+same instance or subclass rather than an object of a certain type (as in the
+simple factory method).
+
+from abc import ABCMeta, abstractmethod
+
+class Section(metaclass=ABCMeta):
+
+    @abstractmethod
+    def describe(self):
+        pass
+
+class PersonalSection(Section):
+    def describe(self):
+        print("Personal Section")
+
+class AlbumSection(Section):
+    def describe(self):
+        print("Album Section")
+
+class PatentSection(Section):
+    def describe(self):
+        print("Patent Section")
+
+class PublicationSection(Section):
+    def describe(self):
+        print("Publication Section")
+
+class Profile(metaclass=ABCMeta):
+    def __init__(self):
+        self.sections = []
+        self.createProfile()
+
+    @abstractmethod
+    def createProfile(self):
+        pass
+
+    def getSections(self):
+        return self.sections
+
+    def addSections(self, section):
+        self.sections.append(section)
+
+class linkedin(Profile):
+    def createProfile(self):
+        self.addSections(PersonalSection())
+        self.addSections(PatentSection())
+        self.addSections(PublicationSection())
+
+class facebook(Profile):
+    def createProfile(self):
+        self.addSections(PersonalSection())
+        self.addSections(AlbumSection())
+
+if __name__ == '__main__':
+    profile_type = input("Which Profile you'd like to create?[LinkedIn or FaceBook]")
+    profile = eval(profile_type.lower())()
+    print("Creating Profile..", type(profile).__name__)
+    print("Profile has sections --", profile.getSections())
+
+Advantages of the Factory method pattern:
+•  It brings in a lot of flexibility and makes the code generic, not being tied to
+a certain class for instantiation. This way, we're dependent on the interface
+(Product) and not on the ConcreteProduct class.
+•  There's loose coupling, as the code that creates the object is separate from the
+code that uses it. The client need not bother about what argument to pass and
+which class to instantiate. The addition of new classes is easy and involves
+low maintenance.
+
+
+                                        Abstract Factory
+
+from abc import ABCMeta, abstractmethod
+
+class PizzaFactory(metaclass=ABCMeta):
+    @abstractmethod
+    def createVegPizza(self):
+        pass
+
+    @abstractmethod
+    def createNonVegPizza(self):
+        pass
+
+class IndianPizzaFactory(PizzaFactory):
+    def createVegPizza(self):
+        return DeluxVeggiePizza()
+
+    def createNonVegPizza(self):
+        return ChickenPizza()
+
+class USPizzaFactory(PizzaFactory):
+    def createVegPizza(self):
+        return MexicanVegPizza()
+
+    def createNonVegPizza(self):
+        return HamPizza()
+
+class VegPizza(metaclass=ABCMeta):
+    @abstractmethod
+    def prepare(self, VegPizza):
+        pass
+
+class NonVegPizza(metaclass=ABCMeta):
+    @abstractmethod
+    def serve(self, VegPizza):
+        pass
+
+class DeluxVeggiePizza(VegPizza):
+    def prepare(self):
+        print("Prepare ", type(self).__name__)
+
+class ChickenPizza(NonVegPizza):
+    def serve(self, VegPizza):
+        print(type(self).__name__, " is served with Chicken on ",type(VegPizza).__name__)
+
+class MexicanVegPizza(VegPizza):
+    def prepare(self):
+        print("Prepare ", type(self).__name__)
+
+class HamPizza(NonVegPizza):
+    def serve(self, VegPizza):
+        print(type(self).__name__, " is served with Ham on ",type(VegPizza).__name__)
+
+
+class PizzaStore:
+    def __init__(self):
+        pass
+
+    def makePizzas(self):
+        for factory in [IndianPizzaFactory(), USPizzaFactory()]:
+            self.factory = factory
+            self.NonVegPizza = self.factory.createNonVegPizza()
+            self.VegPizza = self.factory.createVegPizza()
+            self.VegPizza.prepare()
+            self.NonVegPizza.serve(self.VegPizza)
+
+pizza = PizzaStore()
+pizza.makePizzas()
+
