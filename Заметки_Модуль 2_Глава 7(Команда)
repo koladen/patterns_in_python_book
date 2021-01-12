@@ -1,0 +1,138 @@
+There are multiple ways in which the Command pattern is used in software
+applications. We will discuss two specific implementations that are very relevant
+to the cloud applications:
+•  Redo or rollback operations:
+° While implementing the rollback or redo operations, developers can
+do two different things.
+° These are to create a snapshot in the filesystem or memory, and when
+asked for a rollback, revert to this snapshot.
+° With the Command pattern, you can store the sequence of
+commands, and when asked for a redo, rerun the same set of actions.
+•  Asynchronous task execution:
+° In distributed systems, we often need the facility to perform the
+asynchronous execution of tasks so that the core service is never
+blocked in case of more requests.
+° In the Command pattern, the invoker object can maintain a queue of
+requests and send these tasks to the Receiver object so that they can
+be acted on independent of the main application thread.
+
+
+class Wizard():
+    def __init__(self, src, rootdir):
+        self.choices = []
+        self.rootdir = rootdir
+        self.src = src
+
+    def preferences(self, command):
+        self.choices.append(command)
+
+    def execute(self):
+        for choice in self.choices:
+            if list(choice.values())[0]:
+                print("Copying binaries --", self.src, " to ", self.rootdir)
+            else:
+                print("No Operation")
+
+if __name__ == '__main__':
+    ## Client code
+    wizard = Wizard('python3.5.gzip', '/usr/bin/')
+    ## Users chooses to install Python only
+    wizard.preferences({'python':True})
+    wizard.preferences({'java':False})
+    wizard.execute()
+
+
+ПРИМЕР 2
+
+from abc import ABCMeta, abstractmethod
+
+class Command(metaclass=ABCMeta):
+    def __init__(self, recv):
+        self.recv = recv
+
+    def execute(self):
+        pass
+
+
+class ConcreteCommand(Command):
+    def __init__(self, recv):
+        self.recv = recv
+
+    def execute(self):
+        self.recv.action()
+
+
+class Receiver:
+    def action(self):
+        print("Receiver Action")
+
+
+class Invoker:
+    def command(self, cmd):
+        self.cmd = cmd
+
+    def execute(self):
+        self.cmd.execute()
+
+
+if __name__ == '__main__':
+    recv = Receiver()
+    cmd = ConcreteCommand(recv)
+    invoker = Invoker()
+    invoker.command(cmd)
+    invoker.execute()
+
+
+ПРИМЕР 3
+
+
+from abc import ABCMeta, abstractmethod
+
+class Order(metaclass=ABCMeta):
+    @abstractmethod
+    def execute(self):
+        pass
+
+
+class BuyStockOrder(Order):
+    def __init__(self, stock):
+        self.stock = stock
+
+    def execute(self):
+        self.stock.buy()
+
+
+class SellStockOrder(Order):
+    def __init__(self, stock):
+        self.stock = stock
+
+    def execute(self):
+        self.stock.sell()
+
+
+class StockTrade:
+    def buy(self):
+        print("You will buy stocks")
+
+    def sell(self):
+        print("You will sell stocks")
+
+
+class Agent:
+    def __init__(self):
+        self.__orderQueue = []
+
+    def placeOrder(self, order):
+        self.__orderQueue.append(order)
+        order.execute()
+
+
+if __name__ == '__main__':
+    #Client
+    stock = StockTrade()
+    buyStock = BuyStockOrder(stock)
+    sellStock = SellStockOrder(stock)
+    #Invoker
+    agent = Agent()
+    agent.placeOrder(buyStock)
+    agent.placeOrder(sellStock)
