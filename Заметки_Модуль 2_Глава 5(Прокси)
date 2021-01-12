@@ -1,0 +1,51 @@
+TheProxy pattern is used in multiple scenarios such as the following:
+•  It represents a complex system in a simpler way. For example, a system that
+involves multiple complex calculations or procedures should have a simpler
+interface that can act as a proxy for the benefit of the client.
+•  It adds security to the existing real objects. In many cases, the client is not
+allowed to access the real object directly. This is because the real object can
+get compromised with malicious activities. This way proxies act as a shield
+against malicious intentions and protect the real object.
+•  It provides a local interface for remote objects on different servers. A clear
+example of this is with the distributed systems where the client wants to run
+certain commands on the remote system, but the client may not have direct
+permissions to make this happen. So it contacts a local object (proxy) with the
+request, which is then executed by the proxy on the remote machine.
+•  It provides a light handle for a higher memory-consuming object. Sometimes,
+you may not want to load the main objects unless they're really necessary.
+This is because real objects are really heavy and may need high resource
+utilization. A classic example is that of profile pictures of users on a website.
+You're much better off showing smaller profile images in the list view, but of
+course, you'll need to load the actual image to show the detailed view of the
+user profile.
+
+class Actor(object): # Это объект, доступ к которому обеспечивает прокси.
+    def __init__(self):
+        self.isBusy = False
+
+    def occupied(self):
+        self.isBusy = True
+        print(type(self).__name__ , "is occupied with current movie")
+
+    def available(self):
+        self.isBusy = False
+        print(type(self).__name__ , "is free for the movie")
+
+    def getStatus(self):
+        return self.isBusy
+
+
+class Agent(object):    # А это как раз - прокси, для доступа к объекту. Действия над объектом мы выполняем через него
+    def __init__(self):
+        self.principal = None
+
+    def work(self):
+        self.actor = Actor()
+        if self.actor.getStatus():
+            self.actor.occupied()
+        else:
+            self.actor.available()
+
+if __name__ == '__main__':
+    r = Agent()
+    r.work()
