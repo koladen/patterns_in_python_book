@@ -1,0 +1,239 @@
+The HTML page generation problem can be solved using the Builder pattern. In this
+pattern, there are two main participants: the builder and the director. The builder
+is responsible for creating the various parts of the complex object. In the HTML
+example, these parts are the title, heading, body, and the footer of the page. The
+director controls the building process using a builder instance. The HTML example
+means for calling the builder's functions for setting the title, the heading, and so on.
+Using a different builder instance allows us to create a different HTML page without
+touching any code of the director.
+
+At this point, the distinction between the Builder pattern and the Factory pattern
+might not be very clear. The main difference is that a Factory pattern creates an
+object in a single step, whereas a Builder pattern creates an object in multiple steps,
+and almost always through the use of a director. Some targeted implementations of
+the Builder pattern like Java's StringBuilder bypass the use of a director, but that's
+the exception to the rule.
+Another difference is that while a Factory pattern returns a created object
+immediately, in the Builder pattern the client code explicitly asks the director
+to return the final object when it needs it
+
+То есть я так понимаю, строитель постепенно строит объект, по шагам, и на выходе получается объект с заполненными
+свойствами, а фабричный метод(фабрика, абстрактная фабрика) сразу возвращает готовый объект.
+Возможно ли объединять эти 2 шаблона?... При выборе строителя использовать фабрику, например.
+
+
+class Computer:
+    def __init__(self, serial_number):
+        self.serial = serial_number
+        self.memory = None # in gigabytes
+        self.hdd = None # in gigabytes
+        self.gpu = None
+
+    def __str__(self):
+        info = ('Memory: {}GB'.format(self.memory), 'Hard Disk: {}GB'.format(self.hdd),
+                'Graphics Card: {}'.format(self.gpu))
+        return '\n'.join(info)
+
+
+class ComputerBuilder:  # ЭТО BUILDER В ТЕРМИНАХ ПАТТЕРНА, ОН ДЕЛАЕТ ТО, ЧТО ГОВОРИТ DIRECTOR
+    def __init__(self):
+        self.computer = Computer('AG23385193')
+
+    def configure_memory(self, amount):
+        self.computer.memory = amount
+
+    def configure_hdd(self, amount):
+        self.computer.hdd = amount
+
+    def configure_gpu(self, gpu_model):
+        self.computer.gpu = gpu_model
+
+
+class HardwareEngineer: # ЭТО DIRECTOR В ТЕРМИНАХ ПЕТТЕРНА, ОН ГОВОРИТ, КАК ЧТО-ТО ДЕЛАТЬ
+    def __init__(self):
+        self.builder = None
+
+    def construct_computer(self, memory, hdd, gpu):
+        self.builder = ComputerBuilder()
+        [step for step in (self.builder.configure_memory(memory),
+        self.builder.configure_hdd(hdd),
+        self.builder.configure_gpu(gpu))]
+
+    @property
+    def computer(self):
+        return self.builder.computer
+
+    def main():
+        engineer = HardwareEngineer()
+        engineer.construct_computer(hdd=500, memory=8, gpu='GeForce
+        GTX 650 Ti')
+        computer = engineer.computer
+        print(computer)
+
+
+if __name__ == '__main__':
+    main()
+
+
+                                                ПРИМЕР 2
+
+from enum import Enum
+
+PizzaProgress = Enum('PizzaProgress', 'queued preparation baking ready')
+PizzaDough = Enum('PizzaDough', 'thin thick')
+PizzaSauce = Enum('PizzaSauce', 'tomato creme_fraiche')
+PizzaTopping = Enum('PizzaTopping', 'mozzarella double_mozzarella bacon ham mushrooms red_onion oregano')
+STEP_DELAY = 3
+
+class Pizza:
+    def __init__(self, name):
+        self.name = name
+        self.dough = None
+        self.sauce = None
+        self.topping = []
+
+    def __str__(self):
+        return self.name
+
+    def prepare_dough(self, dough):
+        self.dough = dough
+        print('preparing the {} dough of your {}...'.format(self.dough.name, self))
+        time.sleep(STEP_DELAY)
+        print('done with the {} dough'.format(self.dough.name))
+
+
+class MargaritaBuilder:
+    def __init__(self):
+        self.pizza = Pizza('margarita')
+        self.progress = PizzaProgress.queued
+        self.baking_time = 5
+
+    def prepare_dough(self):
+        self.progress = PizzaProgress.preparation
+        self.pizza.prepare_dough(PizzaDough.thin)
+
+    def add_sauce(self):
+        print('adding the tomato sauce to your margarita...')
+        self.pizza.sauce = PizzaSauce.tomato
+        time.sleep(STEP_DELAY)
+        print('done with the tomato sauce')
+
+    def add_topping(self):
+        print('adding the topping (double mozzarella, oregano) to your margarita')
+        self.pizza.topping.append([i for i in (PizzaTopping.double_mozzarella, PizzaTopping.oregano)])
+        time.sleep(STEP_DELAY)
+        print('done with the topping (double mozzarella, oregano)')
+
+    def bake(self):
+        self.progress = PizzaProgress.baking
+        print('baking your margarita for {} seconds'.format(self.baking_time))
+        time.sleep(self.baking_time)
+        self.progress = PizzaProgress.ready
+        print('your margarita is ready')
+
+
+class CreamyBaconBuilder:
+    def __init__(self):
+        self.pizza = Pizza('creamy bacon')
+        self.progress = PizzaProgress.queued
+        self.baking_time = 7
+
+    def prepare_dough(self):
+        self.progress = PizzaProgress.preparation
+        self.pizza.prepare_dough(PizzaDough.thick)
+
+    def add_sauce(self):
+        print('adding the crème fraîche sauce to your creamy bacon')
+        self.pizza.sauce = PizzaSauce.creme_fraiche
+        time.sleep(STEP_DELAY)
+        print('done with the crème fraîche sauce')
+
+    def add_topping(self):
+        print('adding the topping (mozzarella, bacon, ham, mushrooms, red onion, oregano) to your creamy bacon')
+        self.pizza.topping.append([t for t in (PizzaTopping.mozzarella, PizzaTopping.bacon,
+                                    PizzaTopping.ham,PizzaTopping.mushrooms,
+                                    PizzaTopping.red_onion, PizzaTopping.oregano)])
+        time.sleep(STEP_DELAY)
+        print('done with the topping (mozzarella, bacon, ham, mushrooms, red onion, oregano)')
+
+    def bake(self):
+        self.progress = PizzaProgress.baking
+        print('baking your creamy bacon for {}
+        seconds'.format(self.baking_time))
+        time.sleep(self.baking_time)
+        self.progress = PizzaProgress.ready
+        print('your creamy bacon is ready')
+
+class Waiter:
+    def __init__(self):
+        self.builder = None
+
+    def construct_pizza(self, builder):
+        self.builder = builder
+        [step() for step in (builder.prepare_dough, builder.add_sauce, builder.add_topping, builder.bake)]
+
+    @property
+    def pizza(self):
+        return self.builder.pizza
+
+    def validate_style(builders):
+        try:
+            pizza_style = input('What pizza would you like, [m]argarita or [c]reamy bacon? ')
+            builder = builders[pizza_style]()
+            valid_input = True
+        except KeyError as err:
+            print('Sorry, only margarita (key m) and creamy bacon (key c) are available')
+            return (False, None)
+        return (True, builder)
+
+def main():
+    builders = dict(m=MargaritaBuilder, c=CreamyBaconBuilder)
+    valid_input = False
+    while not valid_input:
+    valid_input, builder = validate_style(builders)
+    print()
+    waiter = Waiter()
+    waiter.construct_pizza(builder)
+    pizza = waiter.pizza
+    print()
+    print('Enjoy your {}!'.format(pizza))
+
+
+if __name__ == '__main__':
+    main()
+
+
+                                            ПРИМЕР 3 (КАСКАДНОЕ СТРОИТЕЛЬСТВО)
+
+class Pizza:
+    def __init__(self, builder):
+        self.garlic = builder.garlic
+        self.extra_cheese = builder.extra_cheese
+
+    def __str__(self):
+        garlic = 'yes' if self.garlic else 'no'
+        cheese = 'yes' if self.extra_cheese else 'no'
+        info = ('Garlic: {}'.format(garlic), 'Extra cheese: {}'.format(cheese))
+        return '\n'.join(info)
+
+
+class PizzaBuilder:
+    def __init__(self):
+        self.extra_cheese = False
+        self.garlic = False
+
+    def add_garlic(self):
+        self.garlic = True
+        return self         # Инициализируем свойство экземпляра объекта и возвращаем этот экземпляр
+
+    def add_extra_cheese(self):
+        self.extra_cheese = True
+        return self
+
+    def build(self):
+        return Pizza(self)
+
+
+if __name__ == '__main__':
+    pizza = Pizza.PizzaBuilder().add_garlic().add_extra_cheese().build()  # Каскадно строим итоговый объект
+    print(pizza)
